@@ -14,14 +14,13 @@ data/*.db
 data/*.db-wal
 data/*.db-shm
 
-# Generated JSON (produced by importer from .docx files)
-data/kriteria.json
-data/kriteria.json.bak.*
-
 # Old version of source data
 data/kriteria-v1/
 
-# But keep the source data (docx files)
+# JSON backups
+data/kriteria.json.bak.*
+
+# But keep the source data (docx files) and generated JSON
 !data/kriteria/
 
 # Temporary archives
