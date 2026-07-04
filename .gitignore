@@ -1,0 +1,50 @@
+# Frontend build output — generated artifact, not source
+ui/dist/
+internal/web/dist/
+!internal/web/dist/.gitkeep
+
+# Node dependencies
+ui/node_modules/
+
+# Go binary output
+bin/
+
+# SQLite databases and WAL files
+data/*.db
+data/*.db-wal
+data/*.db-shm
+
+# Generated JSON (produced by importer from .docx files)
+data/kriteria.json
+data/kriteria.json.bak.*
+
+# Old version of source data
+data/kriteria-v1/
+
+# But keep the source data (docx files)
+!data/kriteria/
+
+# Temporary archives
+data/*.zip
+data/czech_words.txt
+
+# OS files
+.DS_Store
+
+# Editor files
+*.swp
+*.swo
+*~
+
+# Vite temp files (random 8-char names like ziB2oUAn)
+zi[A-Za-z0-9][A-Za-z0-9][A-Za-z0-9][A-Za-z0-9][A-Za-z0-9][A-Za-z0-9]
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Generated standalone HTML
+prehled.html
+
+# Secrets
+.env
+*_secret.json
