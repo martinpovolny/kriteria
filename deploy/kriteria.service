@@ -4,6 +4,7 @@ After=network.target
 
 [Service]
 WorkingDirectory=/home/ubuntu/Projects/kriteria
+EnvironmentFile=/home/ubuntu/Projects/kriteria/.env
 ExecStart=/home/ubuntu/Projects/kriteria/bin/kriteria --addr :8088
 Restart=always
 RestartSec=5
