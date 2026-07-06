@@ -59,6 +59,6 @@ jobs:
           chmod 600 /tmp/deploy_key
           SSH="ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no ubuntu@130.61.58.229"
           SCP="scp -i /tmp/deploy_key -o StrictHostKeyChecking=no"
-          $SCP bin/kriteria-linux-amd64 ubuntu@130.61.58.229:/opt/kriteria/kriteria.new
-          $SSH "bash /opt/kriteria/deploy.sh ${GITHUB_SHA::8}"
+          $SCP bin/kriteria-linux-amd64 ubuntu@130.61.58.229:~/Projects/kriteria/bin/kriteria.new
+          $SSH "bash ~/Projects/kriteria/deploy/deploy.sh ${GITHUB_SHA::8}"
           rm /tmp/deploy_key

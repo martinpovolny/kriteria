@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DEPLOY_DIR="/opt/kriteria"
+DEPLOY_DIR="$HOME/Projects/kriteria"
 SERVICE="kriteria"
 NTFY="$HOME/dotfiles/bin/ntfy.sh"
 COMMIT="${1:-unknown}"
@@ -12,7 +12,7 @@ notify() {
 
 trap 'notify --alert "Kriteria deploy FAILED — commit $COMMIT"' ERR
 
-mv "$DEPLOY_DIR/kriteria.new" "$DEPLOY_DIR/kriteria"
+mv "$DEPLOY_DIR/bin/kriteria.new" "$DEPLOY_DIR/bin/kriteria"
 sudo systemctl restart "$SERVICE"
 
 notify --alert "Kriteria deployed — commit $COMMIT"

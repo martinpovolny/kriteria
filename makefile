@@ -6,7 +6,7 @@ BUILD_TIME := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 LDFLAGS    := -ldflags "-X main.commit=$(COMMIT) -X main.buildTime=$(BUILD_TIME)"
 
 SERVER     := ubuntu@130.61.58.229
-DEPLOY_DIR := /opt/kriteria
+DEPLOY_DIR := ~/Projects/kriteria
 
 .PHONY: all build ui-build ui-dev run dev clean deploy
 
@@ -38,8 +38,8 @@ dev:
 ## Build locally and deploy to production (uploads as .new, runs deploy.sh on server).
 deploy: ui-build
 	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o bin/$(BINARY)-linux-amd64 $(GO_PKG)
-	scp bin/$(BINARY)-linux-amd64 $(SERVER):$(DEPLOY_DIR)/$(BINARY).new
-	ssh $(SERVER) "bash $(DEPLOY_DIR)/deploy.sh local"
+	scp bin/$(BINARY)-linux-amd64 $(SERVER):$(DEPLOY_DIR)/bin/$(BINARY).new
+	ssh $(SERVER) "bash $(DEPLOY_DIR)/deploy/deploy.sh local"
 
 ## Cross-compile for linux/arm64
 build-linux-arm64: ui-build

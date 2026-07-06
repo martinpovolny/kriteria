@@ -160,7 +160,7 @@ function LevelDistributionBar({ evaluations }: { evaluations: CriterionEval[] })
   return (
     <div>
       <div className="flex h-6 rounded-md overflow-hidden border border-border">
-        {[4, 3, 2, 1].map((level) => {
+        {[1, 2, 3, 4].map((level) => {
           const n = counts[level];
           if (n === 0) return null;
           const pct = (n / total) * 100;
@@ -177,7 +177,7 @@ function LevelDistributionBar({ evaluations }: { evaluations: CriterionEval[] })
         })}
       </div>
       <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
-        {[4, 3, 2, 1].map((level) => (
+        {[1, 2, 3, 4].map((level) => (
           <span key={level} className="flex items-center gap-1">
             <span className={`inline-block w-3 h-3 rounded-sm ${levelColor(level)}`} />
             {LEVEL_LETTERS[level]} ({counts[level]})
@@ -196,7 +196,7 @@ function collectTimeline(ev: CriterionEval): TimelineEntry[] {
 function averageLevel(evaluations: CriterionEval[]): string {
   const evald = evaluations.filter((e) => e.current);
   if (evald.length === 0) return "—";
-  const sum = evald.reduce((s, e) => s + (e.current?.level || 0), 0);
+  const sum = evald.reduce((s, e) => s + (5 - (e.current?.level || 0)), 0);
   return (sum / evald.length).toFixed(1);
 }
 

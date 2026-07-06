@@ -146,7 +146,7 @@ data/
 - Teacher UI: school year selector, defaults to current year
 - Student list filtered by school year via enrollment
 
-### ✅ Edookit Student Sync
+### ✅ Edookit Sync (Students + Teachers)
 - `cmd/sync/main.go` — syncs students from edookit API
 - Reads `EDOOKIT_API_URL`, `EDOOKIT_API_USER`, `EDOOKIT_API_PASSWORD` from `.env`
 - Uses `github.com/martinpovolny/go-snip/edookit` client
@@ -158,6 +158,9 @@ data/
 - `--dry-run` flag to preview without writing to DB
 - Idempotent: safe to re-run (upsert + `INSERT OR IGNORE` for enrollments)
 - 54 students synced from 85 in edookit (31 skipped — grade 0)
+- `ListEmployees` syncs teachers into `teacher` table via `edookit:<PersonID>` as `oauth_subject`
+- Idempotent upsert by `oauth_subject`: creates if new, updates if name/email changed
+- Teacher sync runs alongside student sync in a single `go run ./cmd/sync` pass
 
 ### ✅ Dev Mode
 - `--dev` flag (on by default)

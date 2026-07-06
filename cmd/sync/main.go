@@ -53,9 +53,11 @@ func main() {
 
 	client := edookit.New(apiURL, apiUser, apiPassword)
 
+	// === Students ===
+
 	logger.Info("fetching students from edookit", "url", apiURL)
 
-	students, err := fetchWithBackoff(ctx, client, logger)
+	students, err := fetchWithBackoff(ctx, logger, client.ListStudents)
 	if err != nil {
 		logger.Error("failed to fetch students after retries", "err", err)
 		os.Exit(1)
@@ -71,59 +73,114 @@ func main() {
 			}
 			logger.Info("student", "person_id", s.PersonID, "name", s.Firstname+" "+s.Lastname, "grade", grade)
 		}
-		return
+	} else {
+		var created, updated, unchanged, skipped int
+		var enrollmentsEnsured int
+
+		for _, s := range students {
+			if s.CurrentGradeNum == nil || *s.CurrentGradeNum < 1 || *s.CurrentGradeNum > 9 {
+				logger.Warn("student has no valid grade, skipping", "person_id", s.PersonID, "name", s.Firstname)
+				skipped++
+				continue
+			}
+
+			grade := *s.CurrentGradeNum
+			displayName := s.Firstname + " " + s.Lastname
+
+			action, err := upsertStudent(ctx, st.DB(), s.PersonID, displayName, grade)
+			if err != nil {
+				logger.Error("upsert student", "person_id", s.PersonID, "name", displayName, "err", err)
+				skipped++
+				continue
+			}
+
+			switch action {
+			case "created":
+				created++
+			case "updated":
+				updated++
+			default:
+				unchanged++
+			}
+
+			n, err := ensureEnrollments(ctx, st.DB(), s.PersonID, grade, yearID)
+			if err != nil {
+				logger.Error("ensure enrollments", "person_id", s.PersonID, "err", err)
+			}
+			enrollmentsEnsured += n
+		}
+
+		logger.Info("student sync complete",
+			"created", created,
+			"updated", updated,
+			"unchanged", unchanged,
+			"skipped", skipped,
+			"enrollments_ensured", enrollmentsEnsured,
+			"total_in_edookit", len(students),
+		)
 	}
 
-	var created, updated, unchanged, skipped int
-	var enrollmentsEnsured int
+	// === Teachers ===
 
-	for _, s := range students {
-		if s.CurrentGradeNum == nil || *s.CurrentGradeNum < 1 || *s.CurrentGradeNum > 9 {
-			logger.Warn("student has no valid grade, skipping", "person_id", s.PersonID, "name", s.Firstname)
-			skipped++
-			continue
-		}
+	logger.Info("fetching employees from edookit", "url", apiURL)
 
-		grade := *s.CurrentGradeNum
-		displayName := s.Firstname + " " + s.Lastname
-
-		action, err := upsertStudent(ctx, st.DB(), s.PersonID, displayName, grade)
-		if err != nil {
-			logger.Error("upsert student", "person_id", s.PersonID, "name", displayName, "err", err)
-			skipped++
-			continue
-		}
-
-		switch action {
-		case "created":
-			created++
-		case "updated":
-			updated++
-		default:
-			unchanged++
-		}
-
-		n, err := ensureEnrollments(ctx, st.DB(), s.PersonID, grade, yearID)
-		if err != nil {
-			logger.Error("ensure enrollments", "person_id", s.PersonID, "err", err)
-		}
-		enrollmentsEnsured += n
+	employees, err := fetchWithBackoff(ctx, logger, client.ListEmployees)
+	if err != nil {
+		logger.Error("failed to fetch employees after retries", "err", err)
+		os.Exit(1)
 	}
 
-	logger.Info("sync complete",
-		"created", created,
-		"updated", updated,
-		"unchanged", unchanged,
-		"skipped", skipped,
-		"enrollments_ensured", enrollmentsEnsured,
-		"total_in_edookit", len(students),
-	)
+	logger.Info("fetched employees", "count", len(employees))
+
+	if *dryRun {
+		for _, e := range employees {
+			email := "(no email)"
+			if e.PrimaryEmail != nil {
+				email = *e.PrimaryEmail
+			}
+			logger.Info("employee", "person_id", e.PersonID, "name", e.Firstname+" "+e.Lastname, "email", email)
+		}
+	} else {
+		var tCreated, tUpdated, tUnchanged int
+
+		for _, e := range employees {
+			displayName := e.Firstname + " " + e.Lastname
+			email := ""
+			if e.PrimaryEmail != nil {
+				email = *e.PrimaryEmail
+			}
+
+			action, err := upsertTeacher(ctx, st.DB(), e.PersonID, displayName, email)
+			if err != nil {
+				logger.Error("upsert teacher", "person_id", e.PersonID, "name", displayName, "err", err)
+				continue
+			}
+
+			switch action {
+			case "created":
+				tCreated++
+			case "updated":
+				tUpdated++
+			default:
+				tUnchanged++
+			}
+		}
+
+		logger.Info("teacher sync complete",
+			"created", tCreated,
+			"updated", tUpdated,
+			"unchanged", tUnchanged,
+			"total_in_edookit", len(employees),
+		)
+	}
 }
 
-// fetchWithBackoff calls ListStudents with exponential backoff.
+type listFunc[T any] func(opts edookit.StudentDataOpts) ([]T, error)
+
+// fetchWithBackoff calls a list function with exponential backoff.
 // The edookit API is not reliable — we start with 2s delay, double on each
 // retry, up to 5 attempts (2s, 4s, 8s, 16s). Total worst case ~62s.
-func fetchWithBackoff(ctx context.Context, client *edookit.Client, logger *slog.Logger) ([]edookit.Student, error) {
+func fetchWithBackoff[T any](ctx context.Context, logger *slog.Logger, fn listFunc[T]) ([]T, error) {
 	const maxAttempts = 5
 	const baseDelay = 2 * time.Second
 
@@ -133,9 +190,9 @@ func fetchWithBackoff(ctx context.Context, client *edookit.Client, logger *slog.
 			return nil, ctx.Err()
 		}
 
-		students, err := client.ListStudents(edookit.StudentDataOpts{})
+		results, err := fn(edookit.StudentDataOpts{})
 		if err == nil {
-			return students, nil
+			return results, nil
 		}
 
 		lastErr = err
@@ -184,6 +241,44 @@ func upsertStudent(ctx context.Context, db *sql.DB, personID int, displayName st
 		_, err := db.ExecContext(ctx,
 			`UPDATE student SET display_name = ?, current_grade = ? WHERE id = ?`,
 			displayName, grade, existingID)
+		if err != nil {
+			return "", err
+		}
+		return "updated", nil
+	}
+	return "unchanged", nil
+}
+
+// upsertTeacher creates or updates a teacher by edookit person_id.
+// Uses "edookit:<personID>" as oauth_subject.
+// Returns "created", "updated", or "unchanged".
+func upsertTeacher(ctx context.Context, db *sql.DB, personID int, displayName, email string) (string, error) {
+	oauthSubject := fmt.Sprintf("edookit:%d", personID)
+
+	var existingID int64
+	var existingName string
+	var existingEmail string
+	err := db.QueryRowContext(ctx,
+		`SELECT id, display_name, email FROM teacher WHERE oauth_subject = ?`, oauthSubject).
+		Scan(&existingID, &existingName, &existingEmail)
+
+	if err == sql.ErrNoRows {
+		_, err := db.ExecContext(ctx,
+			`INSERT INTO teacher (oauth_subject, email, display_name, role) VALUES (?, ?, ?, 'teacher')`,
+			oauthSubject, email, displayName)
+		if err != nil {
+			return "", err
+		}
+		return "created", nil
+	}
+	if err != nil {
+		return "", err
+	}
+
+	if existingName != displayName || existingEmail != email {
+		_, err := db.ExecContext(ctx,
+			`UPDATE teacher SET display_name = ?, email = ? WHERE id = ?`,
+			displayName, email, existingID)
 		if err != nil {
 			return "", err
 		}

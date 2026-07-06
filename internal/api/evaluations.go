@@ -81,7 +81,7 @@ func criteriaBySubjectGrade(db *sql.DB) http.HandlerFunc {
 				`SELECT level, letter, label, description
 				 FROM criterion_level
 				 WHERE criterion_id = ?
-				 ORDER BY level DESC`, criteria[i].ID)
+				 ORDER BY level ASC`, criteria[i].ID)
 			if err != nil {
 				continue
 			}
