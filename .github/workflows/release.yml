@@ -1,0 +1,64 @@
+name: build & deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**/*.go'
+      - 'ui/**'
+      - 'go.mod'
+      - 'go.sum'
+      - '.github/workflows/release.yml'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      - name: Build UI
+        working-directory: ui
+        run: npm ci && npm run build
+
+      - name: Build binary
+        run: |
+          GOOS=linux GOARCH=amd64 go build \
+            -ldflags "-X main.commit=${GITHUB_SHA::8} -X main.buildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            -o bin/kriteria-linux-amd64 \
+            ./cmd/kriteria
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: "Kriteria — latest build"
+          body: "Built from ${{ github.sha }} — ${{ github.event.head_commit.message }}"
+          prerelease: true
+          files: bin/kriteria-linux-amd64
+
+      - name: Deploy to production
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.KRITERIA_DEPLOY_KEY }}
+        run: |
+          echo "$SSH_PRIVATE_KEY" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+          SSH="ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no ubuntu@130.61.58.229"
+          SCP="scp -i /tmp/deploy_key -o StrictHostKeyChecking=no"
+          $SCP bin/kriteria-linux-amd64 ubuntu@130.61.58.229:~/Projects/kriteria/bin/kriteria.new
+          $SSH "bash ~/Projects/kriteria/deploy/deploy.sh ${GITHUB_SHA::8}"
+          rm /tmp/deploy_key

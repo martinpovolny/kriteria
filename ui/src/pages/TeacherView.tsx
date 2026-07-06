@@ -70,11 +70,8 @@ export default function TeacherView() {
       if (!subj) return;
       const grade = subj.grades.find((g) => g.level === selectedGrade);
       if (!grade) return;
-      // We need subject_id and grade_id for the API. Let's use the criteria endpoint to get them.
-      // Actually the evaluations API takes student_id + optional subject_id + grade_id
-      // But we only have subject code and grade level. Let's just filter by student for now.
       const evals = await apiGet<Evaluation[]>(
-        `/api/evaluations?student_id=${studentId}`
+        `/api/evaluations?student_id=${studentId}&subject_id=${subj.id}&grade_id=${grade.id}`
       );
       setEvaluations(Array.isArray(evals) ? evals : []);
     } catch (e) {

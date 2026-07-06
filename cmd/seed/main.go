@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/martinpovolny/kriteria/internal/store"
 	"golang.org/x/crypto/bcrypt"
@@ -145,6 +146,32 @@ func main() {
 		}
 	}
 	fmt.Println("sample evaluations added for 3 students")
+
+	// 5b. Historical evaluations for Anna Nováková (index 0) in Mat grade 1
+	// This creates a progression over time so the timeline shows arrows/history.
+	now := time.Now()
+	type histEval struct {
+		criterionIdx int
+		level        int
+		monthsAgo    int
+		note         string
+	}
+	history := []histEval{
+		// 3 months ago — mostly J (1) or Č (2)
+		{0, 1, 3, ""}, {1, 2, 3, ""}, {2, 1, 3, ""}, {3, 2, 3, ""}, {4, 1, 3, ""},
+		// 2 months ago — mostly Č (2) or T (3)
+		{0, 2, 2, ""}, {1, 3, 2, ""}, {2, 2, 2, ""}, {3, 3, 2, ""}, {4, 2, 2, ""},
+		// 1 month ago — mostly T (3), one still Č
+		{0, 3, 1, ""}, {1, 4, 1, ""}, {2, 3, 1, ""}, {3, 4, 1, ""}, {4, 3, 1, ""},
+	}
+	for _, h := range history {
+		dt := now.AddDate(0, -h.monthsAgo, 0).Format("2006-01-02 10:00:00")
+		db.ExecContext(ctx,
+			`INSERT INTO evaluation (student_id, criterion_id, teacher_id, level, note, set_at)
+			 VALUES (?, ?, ?, ?, ?, ?)`,
+			studentIDs[0], critIDs[h.criterionIdx], teacherID, h.level, h.note, dt)
+	}
+	fmt.Println("historical evaluations for Anna: 15 entries (3 months of progress)")
 
 	// 6. Generate parent access codes for ALL students (with plaintext for printing)
 	for _, sid := range studentIDs {
