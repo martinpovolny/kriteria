@@ -5,7 +5,10 @@ COMMIT     := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 BUILD_TIME := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 LDFLAGS    := -ldflags "-X main.commit=$(COMMIT) -X main.buildTime=$(BUILD_TIME)"
 
-.PHONY: all build ui-build ui-dev run dev clean
+SERVER     := ubuntu@130.61.58.229
+DEPLOY_DIR := /opt/kriteria
+
+.PHONY: all build ui-build ui-dev run dev clean deploy
 
 ## Build everything: frontend then Go binary
 all: ui-build build
@@ -31,6 +34,12 @@ dev:
 	@echo "Starting Go backend on :8088 and Vite dev server on :5173"
 	@go run $(GO_PKG) & \
 	cd $(UI_DIR) && npm run dev
+
+## Build locally and deploy to production (uploads as .new, runs deploy.sh on server).
+deploy: ui-build
+	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o bin/$(BINARY)-linux-amd64 $(GO_PKG)
+	scp bin/$(BINARY)-linux-amd64 $(SERVER):$(DEPLOY_DIR)/$(BINARY).new
+	ssh $(SERVER) "bash $(DEPLOY_DIR)/deploy.sh local"
 
 ## Cross-compile for linux/arm64
 build-linux-arm64: ui-build

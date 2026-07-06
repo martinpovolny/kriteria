@@ -1,0 +1,13 @@
+[Unit]
+Description=Kriteria — criteria-based student evaluation
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/kriteria
+ExecStart=/opt/kriteria/kriteria --addr :80
+Restart=always
+RestartSec=5
+User=root
+
+[Install]
+WantedBy=multi-user.target
