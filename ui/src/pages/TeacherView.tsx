@@ -128,7 +128,7 @@ export default function TeacherView() {
       <header className="border-b border-border px-6 py-3 flex items-center gap-4">
         <Link to="/" className="text-lg font-bold">Kriteria</Link>
         <span className="text-muted-foreground">/</span>
-        <span className="text-sm font-medium">Učitel (dev)</span>
+        <span className="text-sm font-medium">Učitel</span>
         <div className="ml-auto flex items-center gap-4">
           <Link to="/prehled" className="text-sm text-muted-foreground hover:text-foreground">
             Přehled kritérií →
