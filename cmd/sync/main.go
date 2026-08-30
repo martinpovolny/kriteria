@@ -21,6 +21,7 @@ import (
 func main() {
 	dbPath := flag.String("db", getenv("DB_PATH", "data/kriteria.db"), "path to SQLite database file")
 	dryRun := flag.Bool("dry-run", false, "fetch from edookit but don't write to DB")
+	date := flag.String("date", "", "fetch edookit state as of this date (YYYY-MM-DD), empty = today")
 	flag.Parse()
 
 	_ = godotenv.Load()
@@ -55,9 +56,9 @@ func main() {
 
 	// === Students ===
 
-	logger.Info("fetching students from edookit", "url", apiURL)
+	logger.Info("fetching students from edookit", "url", apiURL, "date", *date)
 
-	students, err := fetchWithBackoff(ctx, logger, client.ListStudents)
+	students, err := fetchWithBackoff(ctx, logger, client.ListStudents, edookit.StudentDataOpts{Date: *date})
 	if err != nil {
 		logger.Error("failed to fetch students after retries", "err", err)
 		os.Exit(1)
@@ -124,7 +125,7 @@ func main() {
 
 	logger.Info("fetching employees from edookit", "url", apiURL)
 
-	employees, err := fetchWithBackoff(ctx, logger, client.ListEmployees)
+	employees, err := fetchWithBackoff(ctx, logger, client.ListEmployees, edookit.StudentDataOpts{})
 	if err != nil {
 		logger.Error("failed to fetch employees after retries", "err", err)
 		os.Exit(1)
@@ -180,7 +181,7 @@ type listFunc[T any] func(opts edookit.StudentDataOpts) ([]T, error)
 // fetchWithBackoff calls a list function with exponential backoff.
 // The edookit API is not reliable — we start with 2s delay, double on each
 // retry, up to 5 attempts (2s, 4s, 8s, 16s). Total worst case ~62s.
-func fetchWithBackoff[T any](ctx context.Context, logger *slog.Logger, fn listFunc[T]) ([]T, error) {
+func fetchWithBackoff[T any](ctx context.Context, logger *slog.Logger, fn listFunc[T], opts edookit.StudentDataOpts) ([]T, error) {
 	const maxAttempts = 5
 	const baseDelay = 2 * time.Second
 
@@ -190,7 +191,7 @@ func fetchWithBackoff[T any](ctx context.Context, logger *slog.Logger, fn listFu
 			return nil, ctx.Err()
 		}
 
-		results, err := fn(edookit.StudentDataOpts{})
+		results, err := fn(opts)
 		if err == nil {
 			return results, nil
 		}
