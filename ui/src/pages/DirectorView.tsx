@@ -4,6 +4,7 @@ import {
   apiGet, type DirectorStudent, type AuditEntry, type Evaluation,
 } from "@/lib/api";
 import ProgressTimeline from "@/components/ProgressTimeline";
+import UserBadge from "@/components/UserBadge";
 
 type Tab = "students" | "progress" | "audit";
 
@@ -41,6 +42,7 @@ export default function DirectorView() {
           <Link to="/prehled" className="text-sm text-muted-foreground hover:text-foreground">
             Přehled kritérií →
           </Link>
+          <UserBadge />
           <a href="/api/auth/logout" className="text-sm text-muted-foreground hover:text-foreground">
             Odhlásit
           </a>

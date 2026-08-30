@@ -1,3 +1,10 @@
+export interface Me {
+  id: number;
+  display_name: string;
+  email: string;
+  role: "teacher" | "director";
+}
+
 export interface Subject {
   id: number;
   code: string;
