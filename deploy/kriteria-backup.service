@@ -1,0 +1,8 @@
+[Unit]
+Description=Kriteria database backup
+
+[Service]
+Type=oneshot
+User=ubuntu
+WorkingDirectory=/home/ubuntu/Projects/kriteria
+ExecStart=/home/ubuntu/Projects/kriteria/deploy/backup.sh

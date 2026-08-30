@@ -145,6 +145,21 @@ data/
 - `GET /api/school-years/current` endpoint
 - Teacher UI: school year selector, defaults to current year
 - Student list filtered by school year via enrollment
+- `SCHOOL_YEAR_OVERRIDE` env var pins the label ahead of the calendar Sep 1
+  cutoff (used in prod for 2026/2027 while the real date was still in
+  August) — **remove it once the real date rolls past Sep 1**, otherwise
+  it'll silently pin the label past the next rollover too
+
+### ✅ Database Backup
+- `deploy/backup.sh` — nightly `sqlite3 .backup` snapshot (safe against a
+  live WAL-mode DB, no downtime) into `data/backups/`
+- Retention: daily snapshots for 14 days, then thinned to one-per-ISO-week,
+  kept forever after that
+- `deploy/kriteria-backup.timer` (systemd) — runs daily at 02:30 UTC +
+  jitter, `Persistent=true`
+- Installed on prod (130.61.58.229) 2026-08-30; **not yet copied off-box**
+  — a full server/disk loss still takes the backups with it (see Pending
+  Work)
 
 ### ✅ Edookit Sync (Students + Teachers)
 - `cmd/sync/main.go` — syncs students from edookit API
@@ -206,6 +221,8 @@ data/
 - Rate limiting on parent verify endpoint
 - Persistent parent sessions (currently in-memory, lost on restart)
 - `SESSION_SECRET` should be set explicitly in production
+- Off-box copy of `deploy/backup.sh` snapshots (currently local-disk only —
+  see ✅ Database Backup above)
 
 ---
 

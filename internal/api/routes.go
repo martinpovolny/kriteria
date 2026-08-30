@@ -69,6 +69,9 @@ func NewMux(logger *slog.Logger, st *store.Store, build BuildInfo, jsonPath stri
 	mux.HandleFunc("GET /api/enrollments", enrollmentHandler(st.DB()))
 	mux.HandleFunc("POST /api/enrollments", enrollmentHandler(st.DB()))
 
+	// Currently authenticated teacher/director
+	mux.HandleFunc("GET /api/me", meHandler(st.DB()))
+
 	// Teachers & directors
 	mux.HandleFunc("GET /api/teachers", teachersHandler(st.DB()))
 	mux.HandleFunc("POST /api/teachers", teachersHandler(st.DB()))

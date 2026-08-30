@@ -1,3 +1,10 @@
+export interface Me {
+  id: number;
+  display_name: string;
+  email: string;
+  role: "teacher" | "director";
+}
+
 export interface Subject {
   id: number;
   code: string;
@@ -113,6 +120,10 @@ async function api<T>(path: string, opts?: RequestInit): Promise<T> {
     ...opts,
     headers: { "Content-Type": "application/json", ...opts?.headers },
   });
+  if (resp.status === 401) {
+    window.location.replace("/login");
+    throw new Error("not authenticated");
+  }
   if (!resp.ok) {
     const err = await resp.json().catch(() => ({ error: "request failed" }));
     throw new Error(err.error || `HTTP ${resp.status}`);

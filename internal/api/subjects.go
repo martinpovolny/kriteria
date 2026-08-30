@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 )
@@ -11,7 +12,15 @@ import (
 // currentSchoolYearLabel returns the label for the current Czech school year.
 // School year runs September 1 to August 31. E.g. June 2026 → "2025/2026",
 // October 2026 → "2026/2027".
+//
+// SCHOOL_YEAR_OVERRIDE lets ops pin the label ahead of the Sept 1 calendar
+// rollover (e.g. when the roster has already been synced for the new year
+// but today's date hasn't crossed into September yet). Unset in normal
+// operation; remove the override once the real date rolls over.
 func currentSchoolYearLabel() string {
+	if override := os.Getenv("SCHOOL_YEAR_OVERRIDE"); override != "" {
+		return override
+	}
 	now := time.Now()
 	year := now.Year()
 	if now.Month() >= time.September {
