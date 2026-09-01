@@ -14,13 +14,20 @@ export default function DirectorView() {
   const [audit, setAudit] = useState<AuditEntry[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const loadAudit = useCallback(() => {
-    setLoading(true);
+  const loadAudit = useCallback((opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setLoading(true);
     return apiGet<AuditEntry[]>("/api/audit?limit=100")
       .then((d) => setAudit(Array.isArray(d) ? d : []))
       .catch(console.error)
-      .finally(() => setLoading(false));
+      .finally(() => { if (!opts?.silent) setLoading(false); });
   }, []);
+
+  // Fetch the audit list once on mount (silently, no loading spinner) so
+  // the "Záznamy hodnocení (n)" tab badge shows the right count right
+  // away, even before the user ever switches to that tab.
+  useEffect(() => {
+    loadAudit({ silent: true });
+  }, [loadAudit]);
 
   useEffect(() => {
     if (tab === "students" || tab === "progress") {
