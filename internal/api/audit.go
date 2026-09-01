@@ -24,13 +24,16 @@ func auditHandler(db *sql.DB) http.HandlerFunc {
 		         sub.code, sub.name,
 		         g.level,
 		         t.display_name,
-		         e.note
+		         e.note,
+		         e.deleted_at,
+		         dt.display_name
 	          FROM evaluation e
 	          JOIN student s ON e.student_id = s.id
 	          JOIN criterion c ON e.criterion_id = c.id
 	          JOIN subject sub ON c.subject_id = sub.id
 	          JOIN grade g ON c.grade_id = g.id
-	          JOIN teacher t ON e.teacher_id = t.id`
+	          JOIN teacher t ON e.teacher_id = t.id
+	          LEFT JOIN teacher dt ON e.deleted_by = dt.id`
 		args := []any{}
 
 		if studentIDStr != "" {
@@ -48,33 +51,47 @@ func auditHandler(db *sql.DB) http.HandlerFunc {
 		defer rows.Close()
 
 		type entry struct {
-			ID            int64  `json:"id"`
-			SetAt         string `json:"set_at"`
-			Level         int    `json:"level"`
-			StudentID     int64  `json:"student_id"`
-			StudentName   string `json:"student_name"`
-			CriterionCode string `json:"criterion_code"`
-			CriterionName string `json:"criterion_name"`
-			Category      string `json:"category"`
-			Subcategory   string `json:"subcategory"`
-			SubjectCode   string `json:"subject_code"`
-			SubjectName   string `json:"subject_name"`
-			GradeLevel    int    `json:"grade_level"`
-			TeacherName   string `json:"teacher_name"`
-			Note          string `json:"note"`
+			ID            int64   `json:"id"`
+			SetAt         string  `json:"set_at"`
+			Level         int     `json:"level"`
+			StudentID     int64   `json:"student_id"`
+			StudentName   string  `json:"student_name"`
+			CriterionCode string  `json:"criterion_code"`
+			CriterionName string  `json:"criterion_name"`
+			Category      string  `json:"category"`
+			Subcategory   string  `json:"subcategory"`
+			SubjectCode   string  `json:"subject_code"`
+			SubjectName   string  `json:"subject_name"`
+			GradeLevel    int     `json:"grade_level"`
+			TeacherName   string  `json:"teacher_name"`
+			Note          string  `json:"note"`
+			DeletedAt     *string `json:"deleted_at"`
+			DeletedBy     *string `json:"deleted_by_name"`
 		}
 
 		var entries []entry
 		for rows.Next() {
 			var e entry
+			var deletedAt, deletedBy sql.NullString
 			rows.Scan(&e.ID, &e.SetAt, &e.Level,
 				&e.StudentID, &e.StudentName,
 				&e.CriterionCode, &e.CriterionName, &e.Category, &e.Subcategory,
 				&e.SubjectCode, &e.SubjectName,
 				&e.GradeLevel,
 				&e.TeacherName,
-				&e.Note)
+				&e.Note,
+				&deletedAt, &deletedBy)
+			if deletedAt.Valid {
+				e.DeletedAt = &deletedAt.String
+			}
+			if deletedBy.Valid {
+				e.DeletedBy = &deletedBy.String
+			}
 			entries = append(entries, e)
+		}
+		if err := rows.Err(); err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
 		}
 		if entries == nil {
 			entries = []entry{}

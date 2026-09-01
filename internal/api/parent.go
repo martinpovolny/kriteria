@@ -270,7 +270,7 @@ func parentEvaluationsHandler(db *sql.DB) http.HandlerFunc {
 		          FROM evaluation e
 		          JOIN criterion c ON e.criterion_id = c.id
 		          LEFT JOIN criterion_level cl ON cl.criterion_id = e.criterion_id AND cl.level = e.level
-		          WHERE e.student_id = ?`
+		          WHERE e.student_id = ? AND e.deleted_at IS NULL`
 		args := []any{studentID}
 
 		if subjectID.Valid && gradeID.Valid {

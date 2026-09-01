@@ -76,5 +76,11 @@ func (s *Store) migrateColumns(ctx context.Context) error {
 	if err := addIfMissing("student", "current_grade", "INTEGER"); err != nil {
 		return err
 	}
+	if err := addIfMissing("evaluation", "deleted_at", "TEXT"); err != nil {
+		return err
+	}
+	if err := addIfMissing("evaluation", "deleted_by", "INTEGER"); err != nil {
+		return err
+	}
 	return nil
 }

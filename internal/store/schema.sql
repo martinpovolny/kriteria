@@ -9,7 +9,7 @@
 --                     criterion-specific description text
 --
 --   student — enrolled in (subject, grade, school_year)
---     └── evaluation (append-only) — who/what/when: teacher_id, level, set_at
+--     └── evaluation (append-only, soft-deletable) — who/what/when: teacher_id, level, set_at
 --     └── parent_access — slug+password for anonymized parent viewing
 
 -- === Teachers & Directors =================================================
@@ -124,12 +124,17 @@ CREATE TABLE IF NOT EXISTS parent_access (
 );
 
 -- === Evaluations (append-only, audit trail, temporal) ====================
--- This is the core table. It is APPEND-ONLY: we never UPDATE or DELETE an
--- evaluation. Every entry records WHO set it (teacher_id), WHAT level (1..4),
--- for which student+criterion, and WHEN (set_at). To get the *current* level
--- for a criterion, take the row with the latest set_at. To track progress,
--- list rows in chronological order. This gives us both the audit trail and
--- the progress-over-time view from a single table.
+-- This is the core table. It is APPEND-ONLY: we never UPDATE or hard-DELETE
+-- an evaluation row. Every entry records WHO set it (teacher_id), WHAT level
+-- (1..4), for which student+criterion, and WHEN (set_at). To get the
+-- *current* level for a criterion, take the non-deleted row with the latest
+-- set_at. To track progress, list rows in chronological order.
+--
+-- Correcting a mistaken entry (e.g. a teacher graded the wrong student or
+-- the wrong level by accident) is done via SOFT delete: deleted_at/deleted_by
+-- are set, but the row stays in the table so the audit trail still shows it
+-- was entered and then removed, by whom and when. Soft-deleted rows are
+-- excluded from "current level" and history views everywhere else.
 CREATE TABLE IF NOT EXISTS evaluation (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     student_id    INTEGER NOT NULL REFERENCES student(id)   ON DELETE CASCADE,
@@ -137,7 +142,9 @@ CREATE TABLE IF NOT EXISTS evaluation (
     teacher_id    INTEGER NOT NULL REFERENCES teacher(id)   ON DELETE RESTRICT,
     level         INTEGER NOT NULL CHECK (level BETWEEN 1 AND 4),
     set_at        TEXT    NOT NULL DEFAULT (datetime('now')),
-    note          TEXT    NOT NULL DEFAULT ''
+    note          TEXT    NOT NULL DEFAULT '',
+    deleted_at    TEXT,                                     -- NULL = active, non-NULL = soft-deleted
+    deleted_by    INTEGER REFERENCES teacher(id)             -- who removed the mistaken entry
 );
 
 CREATE INDEX IF NOT EXISTS idx_evaluation_student_criterion_time

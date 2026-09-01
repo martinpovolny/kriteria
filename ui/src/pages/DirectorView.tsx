@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import {
-  apiGet, type DirectorStudent, type AuditEntry, type Evaluation,
+  apiGet, apiDelete, type DirectorStudent, type AuditEntry, type Evaluation,
 } from "@/lib/api";
 import ProgressTimeline from "@/components/ProgressTimeline";
 import UserBadge from "@/components/UserBadge";
@@ -14,20 +14,38 @@ export default function DirectorView() {
   const [audit, setAudit] = useState<AuditEntry[]>([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
+  const loadAudit = useCallback(() => {
     setLoading(true);
+    return apiGet<AuditEntry[]>("/api/audit?limit=100")
+      .then((d) => setAudit(Array.isArray(d) ? d : []))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
     if (tab === "students" || tab === "progress") {
+      setLoading(true);
       apiGet<DirectorStudent[]>("/api/director/students")
         .then((d) => setStudents(Array.isArray(d) ? d : []))
         .catch(console.error)
         .finally(() => setLoading(false));
     } else {
-      apiGet<AuditEntry[]>("/api/audit?limit=100")
-        .then((d) => setAudit(Array.isArray(d) ? d : []))
-        .catch(console.error)
-        .finally(() => setLoading(false));
+      loadAudit();
     }
-  }, [tab]);
+  }, [tab, loadAudit]);
+
+  const handleDeleteEvaluation = useCallback(async (id: number) => {
+    if (!window.confirm("Opravdu smazat toto hodnocení? Záznam zůstane viditelný v přehledu jako smazaný.")) {
+      return;
+    }
+    try {
+      await apiDelete(`/api/evaluations/${id}`);
+      await loadAudit();
+    } catch (err) {
+      console.error(err);
+      alert("Smazání se nezdařilo.");
+    }
+  }, [loadAudit]);
 
   return (
     <div className="min-h-full bg-background text-foreground">
@@ -70,7 +88,7 @@ export default function DirectorView() {
         ) : tab === "progress" ? (
           <ProgressTab students={students} />
         ) : (
-          <AuditTab entries={audit} />
+          <AuditTab entries={audit} onDelete={handleDeleteEvaluation} />
         )}
       </div>
     </div>
@@ -130,7 +148,7 @@ function StudentsTab({ students }: { students: DirectorStudent[] }) {
   );
 }
 
-function AuditTab({ entries }: { entries: AuditEntry[] }) {
+function AuditTab({ entries, onDelete }: { entries: AuditEntry[]; onDelete: (id: number) => void }) {
   const levelLetter = (level: number) => ["", "J", "Č", "T", "Ú"][level] || "?";
   const levelClass = (level: number) =>
     level === 4 ? "bg-green-100 text-green-900" :
@@ -151,11 +169,15 @@ function AuditTab({ entries }: { entries: AuditEntry[] }) {
               <th className="py-2 pr-4 font-medium">Kritérium</th>
               <th className="py-2 pr-4 font-medium">Předmět</th>
               <th className="py-2 pr-4 font-medium text-center">Úroveň</th>
+              <th className="py-2 pr-4 font-medium"></th>
             </tr>
           </thead>
           <tbody>
             {entries.map((e) => (
-              <tr key={e.id} className="border-b border-border/50 hover:bg-muted/50">
+              <tr
+                key={e.id}
+                className={`border-b border-border/50 hover:bg-muted/50 ${e.deleted_at ? "opacity-50" : ""}`}
+              >
                 <td className="py-2 pr-4 text-muted-foreground whitespace-nowrap">
                   {e.set_at.slice(0, 16).replace("T", " ")}
                 </td>
@@ -170,9 +192,24 @@ function AuditTab({ entries }: { entries: AuditEntry[] }) {
                   {e.subject_code} {e.grade_level}. roč.
                 </td>
                 <td className="py-2 pr-4 text-center">
-                  <span className={`inline-block rounded px-2 py-0.5 text-xs font-bold ${levelClass(e.level)}`}>
+                  <span className={`inline-block rounded px-2 py-0.5 text-xs font-bold ${levelClass(e.level)} ${e.deleted_at ? "line-through" : ""}`}>
                     {levelLetter(e.level)}
                   </span>
+                </td>
+                <td className="py-2 pr-4 text-right whitespace-nowrap">
+                  {e.deleted_at ? (
+                    <span className="text-xs text-muted-foreground italic">
+                      smazáno{e.deleted_by_name ? ` — ${e.deleted_by_name}` : ""}
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => onDelete(e.id)}
+                      className="text-xs text-red-600 hover:text-red-800 hover:underline"
+                      title="Smazat omylem zadané hodnocení"
+                    >
+                      Smazat
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
