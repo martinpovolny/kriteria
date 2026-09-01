@@ -83,7 +83,7 @@ export default function DirectorView() {
           Postup v čase
         </TabButton>
         <TabButton active={tab === "audit"} onClick={() => setTab("audit")}>
-          Záznamy hodnocení ({audit.length})
+          Záznamy hodnocení ({audit.filter((e) => !e.deleted_at).length})
         </TabButton>
       </div>
 
