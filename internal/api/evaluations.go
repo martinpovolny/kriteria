@@ -119,6 +119,51 @@ func evaluationsHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
+// deleteEvaluationHandler soft-deletes a mistaken evaluation entry.
+// DELETE /api/evaluations/{id}
+// The row is kept (deleted_at/deleted_by set) so the audit trail still shows
+// it was entered and later removed, by whom and when — it just stops
+// counting as the "current" or historical level anywhere else.
+func deleteEvaluationHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete {
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+			return
+		}
+		teacherID := teacherIDFromContext(r)
+		if teacherID == 0 {
+			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "not authenticated"})
+			return
+		}
+		id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+		if err != nil || id == 0 {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid id"})
+			return
+		}
+
+		res, err := db.ExecContext(r.Context(),
+			`UPDATE evaluation SET deleted_at = datetime('now'), deleted_by = ?
+			 WHERE id = ? AND deleted_at IS NULL`,
+			teacherID, id)
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
+		}
+		n, _ := res.RowsAffected()
+		if n == 0 {
+			writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found or already deleted"})
+			return
+		}
+
+		db.ExecContext(r.Context(),
+			`INSERT INTO audit_log (actor_type, actor_id, action, detail)
+			 VALUES ('teacher', ?, 'evaluation.delete', ?)`,
+			teacherID, fmt.Sprintf(`{"evaluation_id":%d}`, id))
+
+		writeJSON(w, http.StatusOK, map[string]any{"id": id, "deleted": true})
+	}
+}
+
 func getEvaluations(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	studentIDStr := r.URL.Query().Get("student_id")
 	subjectIDStr := r.URL.Query().Get("subject_id")
@@ -141,10 +186,10 @@ func getEvaluations(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		subjectID, _ := strconv.ParseInt(subjectIDStr, 10, 64)
 		gradeID, _ := strconv.ParseInt(gradeIDStr, 10, 64)
 		query += ` JOIN criterion c2 ON e.criterion_id = c2.id
-		           WHERE e.student_id = ? AND c2.subject_id = ? AND c2.grade_id = ?`
+		           WHERE e.student_id = ? AND e.deleted_at IS NULL AND c2.subject_id = ? AND c2.grade_id = ?`
 		args = append(args, subjectID, gradeID)
 	} else {
-		query += ` WHERE e.student_id = ?`
+		query += ` WHERE e.student_id = ? AND e.deleted_at IS NULL`
 	}
 	query += ` ORDER BY c.sort_order, e.set_at DESC`
 

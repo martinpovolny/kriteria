@@ -113,6 +113,8 @@ export interface AuditEntry {
   grade_level: number;
   teacher_name: string;
   note: string;
+  deleted_at: string | null;
+  deleted_by_name: string | null;
 }
 
 async function api<T>(path: string, opts?: RequestInit): Promise<T> {
@@ -134,3 +136,4 @@ async function api<T>(path: string, opts?: RequestInit): Promise<T> {
 export const apiGet = <T,>(path: string) => api<T>(path);
 export const apiPost = <T,>(path: string, body?: any) =>
   api<T>(path, { method: "POST", body: body ? JSON.stringify(body) : undefined });
+export const apiDelete = <T,>(path: string) => api<T>(path, { method: "DELETE" });

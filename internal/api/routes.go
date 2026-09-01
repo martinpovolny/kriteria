@@ -80,6 +80,7 @@ func NewMux(logger *slog.Logger, st *store.Store, build BuildInfo, jsonPath stri
 	// Evaluations (append-only, audit trail)
 	mux.HandleFunc("GET /api/evaluations", evaluationsHandler(st.DB()))
 	mux.HandleFunc("POST /api/evaluations", evaluationsHandler(st.DB()))
+	mux.HandleFunc("DELETE /api/evaluations/{id}", deleteEvaluationHandler(st.DB()))
 
 	// Audit trail (who, what, when)
 	mux.HandleFunc("GET /api/audit", auditHandler(st.DB()))

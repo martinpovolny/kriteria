@@ -84,7 +84,8 @@ data/
 | `/api/students` | GET, POST | List (with filters) / create students |
 | `/api/enrollments` | GET, POST | List / create enrollments |
 | `/api/evaluations` | GET, POST | Get evaluations (current+history) / set evaluation (append-only) |
-| `/api/audit` | GET | Audit trail of evaluation changes |
+| `/api/evaluations/{id}` | DELETE | Soft-delete a mistaken evaluation entry |
+| `/api/audit` | GET | Audit trail of evaluation changes (includes soft-deleted entries, marked) |
 | `/api/access-codes` | GET | Access codes for printing |
 | `/api/access-codes-by-class` | GET | Access codes grouped by class |
 | `/api/parent/access` | GET, POST | List / generate parent access |
@@ -245,9 +246,16 @@ data/
 - Word pairs: adjective+noun concatenated (e.g. `modrystrom`)
 
 ### Evaluation Storage
-- Append-only: never UPDATE or DELETE
-- Latest entry = current level, older entries = history
+- Append-only: never UPDATE or hard-DELETE
+- Latest non-deleted entry = current level, older entries = history
 - Single table gives both audit trail and progress-over-time
+- Correcting a mistaken entry (wrong student, wrong level) is a **soft
+  delete**: `evaluation.deleted_at`/`deleted_by` are set via
+  `DELETE /api/evaluations/{id}`, but the row stays. It's excluded from
+  current-level and history views (teacher, parent, progress timeline)
+  everywhere, but still shows — greyed out, marked "smazáno" with who and
+  when — in the director's audit trail (`/reditel` → Záznamy hodnocení), so
+  the trail still proves what was entered and later removed.
 
 ### School Year
 - Computed from current date: Sep–Dec → `YYYY/YYYY+1`, Jan–Aug → `YYYY-1/YYYY`
