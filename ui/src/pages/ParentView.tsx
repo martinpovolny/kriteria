@@ -212,13 +212,13 @@ export default function ParentView() {
                       {ev.current.description}
                     </p>
                   )}
-                  {ev.history.length > 0 && (
+                  {(ev.history || []).length > 0 && (
                     <details className="mt-2">
                       <summary className="text-xs text-muted-foreground cursor-pointer">
-                        Historie ({ev.history.length})
+                        Historie ({(ev.history || []).length})
                       </summary>
                       <div className="mt-2 space-y-1">
-                        {ev.history.map((h, i) => (
+                        {(ev.history || []).map((h, i) => (
                           <div key={i} className="text-xs text-muted-foreground">
                             <b>{h.letter}</b> — {h.set_at.slice(0, 10)}
                             {h.note && ` · ${h.note}`}

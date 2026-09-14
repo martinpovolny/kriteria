@@ -508,6 +508,7 @@ func parentEvaluationsHandler(db *sql.DB) http.HandlerFunc {
 				cr = &criterionResult{
 					CriterionID: critID, Code: code, Name: name,
 					Category: category, Subcategory: subcategory,
+					History: []evalEntry{},
 				}
 				byCriterion[critID] = cr
 				ordered = append(ordered, cr)
@@ -546,6 +547,7 @@ func parentEvaluationsHandler(db *sql.DB) http.HandlerFunc {
 						cr := &criterionResult{
 							CriterionID: cid, Code: code, Name: name,
 							Category: cat, Subcategory: subcat,
+							History: []evalEntry{},
 						}
 						ordered = append(ordered, cr)
 					}
