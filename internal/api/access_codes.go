@@ -94,7 +94,7 @@ func accessCodesByClassHandler(db *sql.DB) http.HandlerFunc {
 			`SELECT s.id, s.display_name,
 			        MAX(e.grade_id) as grade_id,
 			        MAX(g.level) as grade_level,
-			        pa.slug, pa.password_plain
+			        pa.id, pa.slug, pa.password_plain
 			 FROM student s
 			 JOIN enrollment e ON e.student_id = s.id
 			 JOIN grade g ON e.grade_id = g.id
@@ -111,6 +111,7 @@ func accessCodesByClassHandler(db *sql.DB) http.HandlerFunc {
 			StudentID   int64  `json:"student_id"`
 			StudentName string `json:"student_name"`
 			GradeLevel  int    `json:"grade_level"`
+			AccessID    int64  `json:"access_id,omitempty"`
 			Slug        string `json:"slug"`
 			Password    string `json:"password"`
 			URL         string `json:"url"`
@@ -121,11 +122,13 @@ func accessCodesByClassHandler(db *sql.DB) http.HandlerFunc {
 
 		for rows.Next() {
 			var sa studentAccess
+			var accessID sql.NullInt64
 			var slug, password sql.NullString
 			var gradeID sql.NullInt64
 			var gradeLevel sql.NullInt64
-			rows.Scan(&sa.StudentID, &sa.StudentName, &gradeID, &gradeLevel, &slug, &password)
+			rows.Scan(&sa.StudentID, &sa.StudentName, &gradeID, &gradeLevel, &accessID, &slug, &password)
 			sa.GradeLevel = int(gradeLevel.Int64)
+			sa.AccessID = accessID.Int64
 			sa.Slug = slug.String
 			sa.Password = password.String
 			if sa.Slug != "" {

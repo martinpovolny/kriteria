@@ -51,8 +51,6 @@ alibi
 aligator
 alimenty
 aljaska
-alkohol
-alkoholik
 allen
 alma
 almuzna
@@ -250,7 +248,6 @@ basket
 basketbal
 basnicka
 basnik
-bastard
 baterie
 baterka
 batesi
@@ -339,17 +336,9 @@ blato
 blazen
 blazinec
 blazinek
-blbec
-blbecek
-blbina
-blbka
-blbo
-blbost
-blboun
 blecha
 blesk
 blind
-bliti
 blizko
 blizkost
 blizni
@@ -525,9 +514,6 @@ burrito
 burza
 buseni
 business
-buzerant
-buzik
-buzna
 bydleni
 bydliste
 bylina
@@ -567,7 +553,6 @@ castka
 casus
 catering
 causa
-cecek
 cedecko
 cedule
 cedulka
@@ -640,7 +625,6 @@ chat
 chata
 chatka
 chatrc
-chcanky
 chemie
 chemik
 chemikalie
@@ -728,9 +712,6 @@ cigareta
 cigaro
 cigo
 cihla
-cikan
-cikanek
-cikanka
 cili
 cina
 cineni
@@ -821,7 +802,6 @@ cuma
 cumak
 cuna
 cune
-curak
 curani
 cvak
 cviceni
@@ -867,7 +847,6 @@ dceruska
 deal
 dealer
 debata
-debil
 debut
 dech
 decilitr
@@ -1129,7 +1108,6 @@ drivi
 drobek
 drobne
 drobnost
-droga
 droid
 dron
 drop
@@ -1143,7 +1121,6 @@ druzstvo
 drzak
 drzeni
 drzitel
-drzka
 drzost
 duben
 duch
@@ -1271,7 +1248,6 @@ expedice
 experiment
 expert
 exploze
-extaze
 extremno
 facebook
 facka
@@ -1509,8 +1485,6 @@ hadka
 hadr
 hadra
 hadry
-hajzl
-hajzlik
 hala
 halenka
 haler
@@ -1563,8 +1537,6 @@ herectvi
 herka
 herkules
 herna
-heroin
-heroina
 herpes
 heslo
 hezoun
@@ -1697,9 +1669,7 @@ housenka
 houska
 housle
 hovadina
-hovado
 hovinko
-hovno
 hovor
 hrabal
 hrabe
@@ -1794,7 +1764,6 @@ idea
 ideal
 identita
 ideologie
-idiot
 idol
 ignorant
 ikona
@@ -2215,10 +2184,7 @@ kohoutek
 koje
 kojeni
 kojot
-kokain
 kokos
-kokot
-kokota
 kokpit
 kokrhel
 koks
@@ -2462,7 +2428,6 @@ kreslo
 krest
 krestan
 krestanka
-kreten
 krev
 kreveta
 kridlo
@@ -2470,7 +2435,6 @@ kridylko
 krik
 kriket
 kriminalka
-kripl
 kris
 kriterium
 kritik
@@ -2534,7 +2498,6 @@ kult
 kultura
 kultus
 kumpan
-kunda
 kundicka
 kung
 kupa
@@ -2554,7 +2517,6 @@ kure
 kurnik
 kurs
 kurt
-kurva
 kuryr
 kurz
 kute
@@ -2820,7 +2782,6 @@ magnat
 magnet
 magneto
 magno
-magor
 mail
 majak
 majetek
@@ -2888,7 +2849,6 @@ margarit
 margarita
 margo
 marianum
-marihuana
 marina
 marinak
 marka
@@ -3161,13 +3121,7 @@ mriz
 mrkev
 mrknuti
 mrnous
-mrtva
-mrtvice
-mrtvola
-mrzak
 msta
-mucednik
-muceni
 mudrc
 muffin
 muka
@@ -3320,7 +3274,6 @@ narceni
 narek
 narez
 narizeni
-narkoman
 narkotikum
 narod
 narodnost
@@ -3336,8 +3289,6 @@ narust
 nasazeni
 naschval
 nasi
-nasili
-nasilnik
 naskok
 nasledek
 nastaveni
@@ -3383,7 +3334,6 @@ nedostatek
 neduvera
 negativ
 negativum
-negr
 neha
 nehet
 nehoda
@@ -3758,8 +3708,6 @@ opevneni
 opicak
 opice
 opicka
-opilec
-opilost
 opium
 oplatka
 oplodneni
@@ -3841,8 +3789,6 @@ otka
 otoceni
 otocka
 otok
-otrava
-otraveni
 otres
 otroctvi
 otrok
@@ -3892,7 +3838,6 @@ padre
 pager
 paintball
 paka
-pako
 pakt
 palac
 palacinka
@@ -4041,7 +3986,6 @@ pena
 pence
 penezenka
 penicilin
-penis
 peniz
 penize
 penizek
@@ -4057,7 +4001,6 @@ perla
 pernik
 pero
 personal
-pervitin
 pesak
 pesimista
 peso
@@ -4072,13 +4015,11 @@ pevnina
 pevnost
 pianista
 piano
-pica
 piccola
 piccolo
 pichani
 pichnuti
 pickup
-picovina
 pied
 piercing
 piha
@@ -4101,7 +4042,6 @@ ping
 pingo
 pinka
 pinzeta
-pipa
 pipani
 pipnuti
 pirat
@@ -4483,7 +4423,6 @@ posluchac
 poslusnost
 posmech
 posouzeni
-posrani
 post
 posta
 postak
@@ -4615,8 +4554,6 @@ prapor
 praporcik
 prarodic
 prasatko
-prase
-prasek
 prasil
 praskac
 praskani
@@ -4641,8 +4578,6 @@ prca
 prcek
 prcice
 prda
-prdel
-prdelka
 prebytek
 precedens
 prechod
@@ -4930,7 +4865,6 @@ provokace
 provoz
 prozrazeni
 prozreni
-prsa
 prso
 prst
 prsten
@@ -4939,7 +4873,6 @@ prstynek
 prubeh
 pruchod
 pruh
-prujem
 prukaz
 prukazka
 prulom
@@ -5054,7 +4987,6 @@ raketa
 raketoplan
 rakev
 rakousku
-rakovina
 rally
 rallye
 ramec
@@ -5460,8 +5392,6 @@ sebeduvera
 sebeobrana
 sebeucta
 sebevedomi
-sebevrah
-sebevrazda
 sedacka
 sedadlo
 sedan
@@ -5781,8 +5711,6 @@ smluva
 smoking
 smolar
 smoula
-smrad
-smradoch
 smrnc
 smrst
 smrt
@@ -5912,7 +5840,6 @@ spekulace
 spenat
 spendlik
 sperk
-sperma
 spermie
 spetka
 spic
@@ -5922,7 +5849,6 @@ spicka
 spider
 spika
 spiknuti
-spina
 spinac
 spion
 spionaz
@@ -5984,8 +5910,6 @@ spunt
 spusteni
 squash
 srab
-srac
-sracka
 sranda
 srandicka
 srani
@@ -6267,7 +6191,6 @@ svicka
 svih
 svincik
 svindl
-svine
 svinstvo
 svit
 svita
@@ -6388,7 +6311,6 @@ teplaky
 teplo
 teplomer
 teplota
-teplous
 tepna
 tequila
 terapeut
@@ -6403,9 +6325,6 @@ terminal
 terminator
 termostat
 terno
-teror
-terorismus
-terorista
 terra
 tesak
 tesar
@@ -6717,7 +6636,6 @@ umelec
 umelka
 umelkyne
 umeni
-umirani
 umisteni
 umluva
 umrti
@@ -6838,7 +6756,6 @@ vacha
 vacice
 vada
 vafle
-vagina
 vagon
 vaha
 vahani
@@ -6966,7 +6883,6 @@ veznice
 vhod
 viagra
 vibrace
-vibrator
 vicero
 vichrice
 vicko
@@ -7079,7 +6995,6 @@ vozidlo
 vozik
 vrabec
 vraceni
-vrah
 vrak
 vrakoviste
 vrana
@@ -7088,8 +7003,6 @@ vrata
 vratka
 vratna
 vrato
-vrazda
-vrazdeni
 vrazedkyne
 vrceni
 vrch
@@ -7104,7 +7017,6 @@ vrtani
 vrtule
 vrtulnik
 vseobecno
-vsivak
 vstup
 vstupenka
 vstupne
@@ -7355,9 +7267,6 @@ zabak
 zabava
 zabaveni
 zaber
-zabijak
-zabijeni
-zabiti
 zabka
 zablesk
 zabradli
@@ -7559,7 +7468,6 @@ zavodnik
 zavoj
 zavolani
 zavrat
-zavrazdeni
 zavreni
 zazeh
 zazemi
@@ -7666,9 +7574,6 @@ zkouska
 zkrat
 zkratka
 zkumavka
-zkurvenec
-zkurveni
-zkurvysyn
 zkusena
 zkusenost
 zlaticko
@@ -7696,12 +7601,10 @@ zlut
 zmatek
 zmateni
 zmena
-zmetek
 zmije
 zminka
 zmirneni
 zmizeni
-zmrd
 zmrzka
 zmrzlina
 znaceni
@@ -7715,7 +7618,6 @@ znamenko
 znaminko
 znamka
 znamost
-znasilneni
 znecisteni
 znelka
 zneuziti
@@ -7800,9 +7702,7 @@ zvoleni
 zvon
 zvonek
 zvoneni
-zvraceni
 zvrat
-zvratek
 zvratky
 zvrhlik
 zvuk

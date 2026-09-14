@@ -78,10 +78,8 @@ bity
 bizardni
 bizarni
 blaznivy
-blby
 bledy
 blikajici
-blity
 blizici
 blond
 blondaty
@@ -229,7 +227,6 @@ davisovy
 davny
 dbaly
 dealeruv
-debilni
 decentni
 dedeckuv
 dedicny
@@ -314,7 +311,6 @@ dramaticky
 dreveny
 drivejsi
 drobny
-drogovy
 drsny
 drzeny
 drzici
@@ -406,8 +402,6 @@ gumovy
 guverneruv
 hadi
 haduv
-hajzlovy
-hajzluv
 hanebny
 happy
 haraseny
@@ -492,7 +486,6 @@ hybridni
 hystericky
 idealni
 identicky
-idiotsky
 ilegalni
 imaginarni
 imigracni
@@ -859,7 +852,6 @@ mrazeny
 mrknuty
 mrnavy
 mrzuty
-muceny
 muslimsky
 muzny
 mysi
@@ -931,8 +923,6 @@ narodni
 narozeny
 naruseny
 nasazeny
-nasilnicky
-nasilny
 nasledny
 nasrany
 nastaveny
@@ -1121,7 +1111,6 @@ operni
 opetovny
 opevneny
 opici
-opily
 oplodneny
 oplzly
 opovrzeny
@@ -1167,8 +1156,6 @@ otcuv
 otekly
 otevreny
 otoceny
-otraveny
-otravny
 otreseny
 otresny
 ovalny
@@ -1295,7 +1282,6 @@ pochybeny
 pochybny
 pocitacovy
 poctivy
-podelany
 podepsany
 podivny
 podkozni
@@ -1383,7 +1369,6 @@ poslusny
 posly
 posmrtny
 posouzeny
-posrany
 postarsi
 postaveny
 postovni
@@ -1437,7 +1422,6 @@ pracovity
 pracovni
 prakticky
 prany
-praseci
 praskly
 prasknuty
 prastary
@@ -1823,7 +1807,6 @@ smetany
 smireny
 smirny
 smiseny
-smradlavy
 smrtelny
 smrtici
 smutecni
@@ -2135,7 +2118,6 @@ ultra
 umelecky
 umely
 umeny
-umirajici
 umisteny
 umrtni
 umyslny
@@ -2296,9 +2278,6 @@ volni
 volny
 volovy
 vraceny
-vrahuv
-vrazdeny
-vrazdici
 vrazedny
 vrceny
 vrely
@@ -2432,9 +2411,6 @@ zabaveny
 zabavni
 zabavny
 zabi
-zabijacky
-zabijeny
-zabity
 zabyvajici
 zacarovany
 zachazeny
@@ -2510,7 +2486,6 @@ zasnoubeny
 zasnubni
 zasnubny
 zasobovaci
-zasrany
 zastaraly
 zastaveny
 zastizeny
@@ -2528,7 +2503,6 @@ zavedeny
 zaverecny
 zaveseny
 zavodni
-zavrazdeny
 zavreny
 zazivaci
 zazneny
@@ -2583,7 +2557,6 @@ zjisteny
 zkazeny
 zklamany
 zkouseny
-zkurveny
 zkusebni
 zkusebny
 zkuseny
@@ -2605,7 +2578,6 @@ znackovy
 znacny
 znakovy
 znamenity
-znasilneny
 znechuceny
 znecisteny
 zneuzity
@@ -2658,7 +2630,6 @@ zvladnuty
 zvlastni
 zvoleny
 zvoneny
-zvraceny
 zvratny
 zvrhly
 zvukovy

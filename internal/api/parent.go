@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"crypto/rand"
 	"database/sql"
 	_ "embed"
@@ -152,6 +153,188 @@ func parentAccessHandler(db *sql.DB) http.HandlerFunc {
 			"password":       password, // returned ONCE so teacher can give it to parent
 			"student_id":     body.StudentID,
 			"url":            "/z/" + slug,
+		})
+	}
+}
+
+// regeneratedAccess is the result of replacing one parent_access row.
+type regeneratedAccess struct {
+	NewID     int64
+	Slug      string
+	Password  string
+	StudentID int64
+}
+
+// regenerateAccessCode revokes exactly one existing parent_access row (by
+// id) and creates a fresh replacement with a newly generated slug+password,
+// same student and scoping. Scoped strictly by primary key — touches no
+// other row, no other table.
+func regenerateAccessCode(ctx context.Context, db *sql.DB, teacherID, oldID int64) (regeneratedAccess, error) {
+	var (
+		studentID                      int64
+		subjectID, gradeID, schoolYear sql.NullInt64
+	)
+	err := db.QueryRowContext(ctx,
+		`SELECT student_id, subject_id, grade_id, school_year_id
+		 FROM parent_access WHERE id = ? AND revoked_at IS NULL`, oldID).
+		Scan(&studentID, &subjectID, &gradeID, &schoolYear)
+	if err != nil {
+		return regeneratedAccess{}, err
+	}
+
+	// Generate unique slug for the replacement.
+	var slug, password string
+	var slugTaken bool
+	for i := 0; i < 10; i++ {
+		slug, password = generateWordPair()
+		serr := db.QueryRowContext(ctx,
+			`SELECT 1 FROM parent_access WHERE slug = ? AND revoked_at IS NULL`, slug).Scan(&slugTaken)
+		if serr == sql.ErrNoRows {
+			slugTaken = false
+			break
+		}
+	}
+	if slugTaken {
+		return regeneratedAccess{}, fmt.Errorf("could not generate unique slug")
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return regeneratedAccess{}, fmt.Errorf("hash failed: %w", err)
+	}
+
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return regeneratedAccess{}, err
+	}
+	defer tx.Rollback()
+
+	// Revoke exactly this one row — scoped by primary key, nothing else.
+	res, err := tx.ExecContext(ctx,
+		`UPDATE parent_access SET revoked_at = datetime('now') WHERE id = ? AND revoked_at IS NULL`, oldID)
+	if err != nil {
+		return regeneratedAccess{}, err
+	}
+	if n, _ := res.RowsAffected(); n != 1 {
+		return regeneratedAccess{}, fmt.Errorf("access code was already revoked")
+	}
+
+	insertRes, err := tx.ExecContext(ctx,
+		`INSERT INTO parent_access (slug, password_hash, password_plain, student_id, subject_id, grade_id, school_year_id)
+		 VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		slug, string(hash), password, studentID, subjectID, gradeID, schoolYear)
+	if err != nil {
+		return regeneratedAccess{}, err
+	}
+	newID, _ := insertRes.LastInsertId()
+
+	if err := tx.Commit(); err != nil {
+		return regeneratedAccess{}, err
+	}
+
+	db.ExecContext(ctx,
+		`INSERT INTO audit_log (actor_type, actor_id, action, detail)
+		 VALUES ('teacher', ?, 'parent_access.regenerate', ?)`,
+		teacherID,
+		fmt.Sprintf(`{"old_parent_access_id":%d,"new_parent_access_id":%d,"student_id":%d,"slug":"%s"}`,
+			oldID, newID, studentID, slug))
+
+	return regeneratedAccess{NewID: newID, Slug: slug, Password: password, StudentID: studentID}, nil
+}
+
+// parentAccessRegenerateHandler revokes exactly one existing parent_access
+// row (by id, from the URL path) and creates a fresh replacement. Never
+// touches any other access code.
+// POST /api/parent/access/{id}/regenerate
+func parentAccessRegenerateHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+			return
+		}
+		teacherID := teacherIDFromContext(r)
+		if teacherID == 0 {
+			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "not authenticated"})
+			return
+		}
+
+		oldID, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+		if err != nil || oldID == 0 {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid id"})
+			return
+		}
+
+		result, err := regenerateAccessCode(r.Context(), db, teacherID, oldID)
+		if err == sql.ErrNoRows {
+			writeJSON(w, http.StatusNotFound, map[string]string{"error": "access code not found or already revoked"})
+			return
+		} else if err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
+		}
+
+		writeJSON(w, http.StatusOK, map[string]any{
+			"id":         result.NewID,
+			"slug":       result.Slug,
+			"password":   result.Password,
+			"student_id": result.StudentID,
+			"url":        "/z/" + result.Slug,
+		})
+	}
+}
+
+// parentAccessRegenerateAllHandler revokes every currently-active
+// parent_access row and creates a fresh replacement for each — used for a
+// one-time bulk cleanup (e.g. after tightening the wordlist filter). Only
+// ever touches the parent_access table, one row (by id) at a time; no other
+// data is read or written.
+// POST /api/parent/access/regenerate-all
+func parentAccessRegenerateAllHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+			return
+		}
+		teacherID := teacherIDFromContext(r)
+		if teacherID == 0 {
+			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "not authenticated"})
+			return
+		}
+
+		rows, err := db.QueryContext(r.Context(), `SELECT id FROM parent_access WHERE revoked_at IS NULL`)
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
+		}
+		var ids []int64
+		for rows.Next() {
+			var id int64
+			if err := rows.Scan(&id); err == nil {
+				ids = append(ids, id)
+			}
+		}
+		rows.Close()
+
+		type failure struct {
+			ID    int64  `json:"id"`
+			Error string `json:"error"`
+		}
+		var regenerated int
+		var failed []failure
+		for _, id := range ids {
+			if _, err := regenerateAccessCode(r.Context(), db, teacherID, id); err != nil {
+				failed = append(failed, failure{ID: id, Error: err.Error()})
+				continue
+			}
+			regenerated++
+		}
+		if failed == nil {
+			failed = []failure{}
+		}
+
+		writeJSON(w, http.StatusOK, map[string]any{
+			"regenerated": regenerated,
+			"failed":      failed,
 		})
 	}
 }

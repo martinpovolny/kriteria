@@ -44,16 +44,16 @@ const accessPrintHTML = `<!DOCTYPE html>
                     padding: 4px 8px; background: #f0f0f0;
                     border-radius: 4px; text-align: center; letter-spacing: 1px; }
   .card .no-code { color: #999; font-size: 12px; font-style: italic; margin-bottom: 8px; }
-  .card .generate-btn { padding: 4px 10px; border: 1px solid #ccc; border-radius: 6px;
-                        background: #fff; cursor: pointer; font-size: 12px; }
-  .card .generate-btn:hover { background: #e8e8e8; }
-  .card .generate-btn:disabled { opacity: 0.5; cursor: default; }
+  .card .generate-btn, .card .regenerate-btn { padding: 4px 10px; border: 1px solid #ccc; border-radius: 6px;
+                        background: #fff; cursor: pointer; font-size: 11px; margin-top: 6px; }
+  .card .generate-btn:hover, .card .regenerate-btn:hover { background: #e8e8e8; }
+  .card .generate-btn:disabled, .card .regenerate-btn:disabled { opacity: 0.5; cursor: default; }
   .card .error { color: #c00; font-size: 11px; margin-top: 4px; }
 
   @media print {
     body { background: #fff; padding: 0; }
     .controls { display: none; }
-    .generate-btn { display: none; }
+    .generate-btn, .regenerate-btn { display: none; }
     .class-section { page-break-after: always; }
     .class-section:last-child { page-break-after: auto; }
   }
@@ -67,6 +67,7 @@ const accessPrintHTML = `<!DOCTYPE html>
 <div class="controls">
   <button onclick="window.print()">Tisk</button>
   <button onclick="generateAllMissing()">Vygenerovat chybějící kódy</button>
+  <button onclick="regenerateAll(this)">Přegenerovat všechny kódy</button>
 </div>
 
 <div id="content">
@@ -98,6 +99,7 @@ function cardHtml(s) {
   if (s.slug) {
     html += '<div class="url">' + escapeHtml(location.host) + '/z/' + escapeHtml(s.slug) + '</div>';
     html += '<div class="password">' + escapeHtml(s.password || '—') + '</div>';
+    html += '<button class="regenerate-btn" onclick="regenerateOne(' + s.access_id + ', ' + s.student_id + ', this)">Přegenerovat</button>';
   } else {
     html += '<div class="no-code">bez přístupového kódu</div>';
     html += '<button class="generate-btn" onclick="generateOne(' + s.student_id + ', this)">Vygenerovat kód</button>';
@@ -183,6 +185,59 @@ async function generateAllMissing() {
     const card = document.getElementById('card-' + studentId);
     const btn = card ? card.querySelector('.generate-btn') : null;
     await generateOne(studentId, btn);
+  }
+}
+
+async function regenerateAccessCode(accessId) {
+  const resp = await fetch('/api/parent/access/' + accessId + '/regenerate', { method: 'POST' });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({ error: 'chyba' }));
+    throw new Error(err.error || 'chyba');
+  }
+  return resp.json();
+}
+
+async function regenerateOne(accessId, studentId, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = 'Generuji…'; }
+  try {
+    const created = await regenerateAccessCode(accessId);
+    const s = findStudent(studentId);
+    if (s) {
+      s.access_id = created.id;
+      s.slug = created.slug;
+      s.password = created.password;
+      const card = document.getElementById('card-' + studentId);
+      if (card) card.innerHTML = cardHtml(s);
+    }
+  } catch (e) {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Přegenerovat';
+      btn.insertAdjacentHTML('afterend', '<div class="error">' + escapeHtml(e.message) + '</div>');
+    }
+  }
+}
+
+async function regenerateAll(btn) {
+  if (!confirm('Opravdu přegenerovat úplně všechny přístupové kódy? Všechna dosud vytištěná hesla přestanou fungovat.')) {
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = 'Přegeneruji…';
+  try {
+    const resp = await fetch('/api/parent/access/regenerate-all', { method: 'POST' });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({ error: 'chyba' }));
+      throw new Error(err.error || 'chyba');
+    }
+    const result = await resp.json();
+    await load();
+    alert('Přegenerováno: ' + result.regenerated + (result.failed.length ? ('\nSelhalo: ' + result.failed.length) : ''));
+  } catch (e) {
+    alert('Chyba: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Přegenerovat všechny kódy';
   }
 }
 

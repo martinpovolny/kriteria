@@ -95,6 +95,8 @@ func NewMux(logger *slog.Logger, st *store.Store, build BuildInfo, jsonPath stri
 	// Parent access (anonymized)
 	mux.HandleFunc("POST /api/parent/access", parentAccessHandler(st.DB()))
 	mux.HandleFunc("GET /api/parent/access", parentAccessListHandler(st.DB()))
+	mux.HandleFunc("POST /api/parent/access/{id}/regenerate", parentAccessRegenerateHandler(st.DB()))
+	mux.HandleFunc("POST /api/parent/access/regenerate-all", parentAccessRegenerateAllHandler(st.DB()))
 	mux.HandleFunc("POST /api/parent/verify", parentVerifyHandler(st.DB()))
 	mux.HandleFunc("GET /api/parent/evaluations", parentEvaluationsHandler(st.DB()))
 
