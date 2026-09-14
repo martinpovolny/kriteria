@@ -349,7 +349,6 @@ emotivni
 energicky
 enormni
 epicky
-eroticky
 eticky
 evakuacni
 evidentni
@@ -382,7 +381,6 @@ foceny
 forenzni
 formalni
 fotbalovy
-frigidni
 fungujici
 funkcni
 funky
@@ -490,7 +488,6 @@ ilegalni
 imaginarni
 imigracni
 imperialni
-impotentni
 impozantni
 impulsni
 impulzivni
@@ -1025,7 +1022,6 @@ obrneny
 obrovsky
 obsahujici
 obsazeny
-obscenni
 obtizny
 obvykly
 obycejny
@@ -1222,7 +1218,6 @@ penzijni
 perfektni
 perny
 personalni
-perverzni
 pestounsky
 petilety
 pevny
@@ -2631,7 +2626,6 @@ zvlastni
 zvoleny
 zvoneny
 zvratny
-zvrhly
 zvukovy
 zvykly
 zvyseny

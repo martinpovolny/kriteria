@@ -5199,7 +5199,6 @@ rozinka
 rozkaz
 rozklad
 rozkos
-rozkrok
 rozliseni
 rozloucena
 rozlouceni
