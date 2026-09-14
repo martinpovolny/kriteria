@@ -117,14 +117,26 @@ export interface AuditEntry {
   deleted_by_name: string | null;
 }
 
-async function api<T>(path: string, opts?: RequestInit): Promise<T> {
+interface ApiOpts {
+  // Skip the global redirect-to-/login on 401. Use for endpoints that have
+  // their own auth flow (e.g. parent access), where a 401 just means "wrong
+  // password" or "session expired", not "you're logged out of the app".
+  skipAuthRedirect?: boolean;
+}
+
+async function api<T>(path: string, opts?: RequestInit & ApiOpts): Promise<T> {
+  const { skipAuthRedirect, ...fetchOpts } = opts || {};
   const resp = await fetch(path, {
-    ...opts,
-    headers: { "Content-Type": "application/json", ...opts?.headers },
+    ...fetchOpts,
+    headers: { "Content-Type": "application/json", ...fetchOpts.headers },
   });
   if (resp.status === 401) {
-    window.location.replace("/login");
-    throw new Error("not authenticated");
+    if (!skipAuthRedirect) {
+      window.location.replace("/login");
+      throw new Error("not authenticated");
+    }
+    const err = await resp.json().catch(() => ({ error: "unauthorized" }));
+    throw new Error(err.error || "unauthorized");
   }
   if (!resp.ok) {
     const err = await resp.json().catch(() => ({ error: "request failed" }));
@@ -133,7 +145,7 @@ async function api<T>(path: string, opts?: RequestInit): Promise<T> {
   return resp.json();
 }
 
-export const apiGet = <T,>(path: string) => api<T>(path);
-export const apiPost = <T,>(path: string, body?: any) =>
-  api<T>(path, { method: "POST", body: body ? JSON.stringify(body) : undefined });
-export const apiDelete = <T,>(path: string) => api<T>(path, { method: "DELETE" });
+export const apiGet = <T,>(path: string, opts?: ApiOpts) => api<T>(path, opts);
+export const apiPost = <T,>(path: string, body?: any, opts?: ApiOpts) =>
+  api<T>(path, { method: "POST", body: body ? JSON.stringify(body) : undefined, ...opts });
+export const apiDelete = <T,>(path: string, opts?: ApiOpts) => api<T>(path, { method: "DELETE", ...opts });

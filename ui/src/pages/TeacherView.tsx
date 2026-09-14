@@ -131,6 +131,9 @@ export default function TeacherView() {
         <span className="text-muted-foreground">/</span>
         <span className="text-sm font-medium">Učitel</span>
         <div className="ml-auto flex items-center gap-4">
+          <Link to="/prehled-pristupu" className="text-sm text-muted-foreground hover:text-foreground">
+            Přístupové kódy →
+          </Link>
           <Link to="/prehled" className="text-sm text-muted-foreground hover:text-foreground">
             Přehled kritérií →
           </Link>

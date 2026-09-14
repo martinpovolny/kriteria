@@ -43,11 +43,17 @@ const accessPrintHTML = `<!DOCTYPE html>
   .card .password { font-family: monospace; font-size: 15px; font-weight: 700;
                     padding: 4px 8px; background: #f0f0f0;
                     border-radius: 4px; text-align: center; letter-spacing: 1px; }
-  .card .no-code { color: #999; font-size: 12px; font-style: italic; }
+  .card .no-code { color: #999; font-size: 12px; font-style: italic; margin-bottom: 8px; }
+  .card .generate-btn { padding: 4px 10px; border: 1px solid #ccc; border-radius: 6px;
+                        background: #fff; cursor: pointer; font-size: 12px; }
+  .card .generate-btn:hover { background: #e8e8e8; }
+  .card .generate-btn:disabled { opacity: 0.5; cursor: default; }
+  .card .error { color: #c00; font-size: 11px; margin-top: 4px; }
 
   @media print {
     body { background: #fff; padding: 0; }
     .controls { display: none; }
+    .generate-btn { display: none; }
     .class-section { page-break-after: always; }
     .class-section:last-child { page-break-after: auto; }
   }
@@ -60,6 +66,7 @@ const accessPrintHTML = `<!DOCTYPE html>
 
 <div class="controls">
   <button onclick="window.print()">Tisk</button>
+  <button onclick="generateAllMissing()">Vygenerovat chybějící kódy</button>
 </div>
 
 <div id="content">
@@ -67,11 +74,13 @@ const accessPrintHTML = `<!DOCTYPE html>
 </div>
 
 <script>
+let classesData = [];
+
 async function load() {
   try {
     const resp = await fetch('/api/access-codes-by-class');
-    const classes = await resp.json();
-    render(classes);
+    classesData = await resp.json();
+    render();
   } catch (e) {
     document.getElementById('content').innerHTML =
       '<div class="status-loading">Chyba: ' + e.message + '</div>';
@@ -84,16 +93,28 @@ function escapeHtml(s) {
   return d.innerHTML;
 }
 
-function render(classes) {
+function cardHtml(s) {
+  let html = '<div class="student">' + escapeHtml(s.student_name) + '</div>';
+  if (s.slug) {
+    html += '<div class="url">' + escapeHtml(location.host) + '/z/' + escapeHtml(s.slug) + '</div>';
+    html += '<div class="password">' + escapeHtml(s.password || '—') + '</div>';
+  } else {
+    html += '<div class="no-code">bez přístupového kódu</div>';
+    html += '<button class="generate-btn" onclick="generateOne(' + s.student_id + ', this)">Vygenerovat kód</button>';
+  }
+  return html;
+}
+
+function render() {
   const container = document.getElementById('content');
   container.innerHTML = '';
 
-  if (!classes || classes.length === 0) {
+  if (!classesData || classesData.length === 0) {
     container.innerHTML = '<div class="status-loading">Žádné kódy</div>';
     return;
   }
 
-  for (const cls of classes) {
+  for (const cls of classesData) {
     const section = document.createElement('div');
     section.className = 'class-section';
 
@@ -101,20 +122,67 @@ function render(classes) {
     html += '<div class="cards">';
 
     for (const s of cls.students) {
-      html += '<div class="card">';
-      html += '<div class="student">' + escapeHtml(s.student_name) + '</div>';
-      if (s.slug) {
-        html += '<div class="url">hodnoceni.hmpf.cz/z/' + escapeHtml(s.slug) + '</div>';
-        html += '<div class="password">' + escapeHtml(s.password || '—') + '</div>';
-      } else {
-        html += '<div class="no-code">bez přístupového kódu</div>';
-      }
-      html += '</div>';
+      html += '<div class="card" id="card-' + s.student_id + '">' + cardHtml(s) + '</div>';
     }
 
     html += '</div>';
     section.innerHTML = html;
     container.appendChild(section);
+  }
+}
+
+function findStudent(studentId) {
+  for (const cls of classesData) {
+    const s = cls.students.find((x) => x.student_id === studentId);
+    if (s) return s;
+  }
+  return null;
+}
+
+async function createAccessCode(studentId) {
+  const resp = await fetch('/api/parent/access', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ student_id: studentId }),
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({ error: 'chyba' }));
+    throw new Error(err.error || 'chyba');
+  }
+  return resp.json();
+}
+
+async function generateOne(studentId, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = 'Generuji…'; }
+  try {
+    const created = await createAccessCode(studentId);
+    const s = findStudent(studentId);
+    if (s) {
+      s.slug = created.slug;
+      s.password = created.password;
+      const card = document.getElementById('card-' + studentId);
+      if (card) card.innerHTML = cardHtml(s);
+    }
+  } catch (e) {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Vygenerovat kód';
+      btn.insertAdjacentHTML('afterend', '<div class="error">' + escapeHtml(e.message) + '</div>');
+    }
+  }
+}
+
+async function generateAllMissing() {
+  const missing = [];
+  for (const cls of classesData) {
+    for (const s of cls.students) {
+      if (!s.slug) missing.push(s.student_id);
+    }
+  }
+  for (const studentId of missing) {
+    const card = document.getElementById('card-' + studentId);
+    const btn = card ? card.querySelector('.generate-btn') : null;
+    await generateOne(studentId, btn);
   }
 }
 

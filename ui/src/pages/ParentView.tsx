@@ -37,6 +37,13 @@ interface ParentEvaluation {
 
 type View = "current" | "progress";
 
+// Each child has their own /z/:slug URL, so the session token must be
+// scoped per-slug — otherwise a parent with two kids would have the second
+// child's login silently overwrite the first's.
+function storageKey(slug: string): string {
+  return `parent_token:${slug}`;
+}
+
 export default function ParentView() {
   const { slug } = useParams<{ slug: string }>();
   const [password, setPassword] = useState("");
@@ -51,13 +58,14 @@ export default function ParentView() {
     setError("");
     setLoading(true);
     try {
-      const resp = await apiPost<VerifyResp>("/api/parent/verify", {
-        slug: slug || "",
-        password,
-      });
+      const resp = await apiPost<VerifyResp>(
+        "/api/parent/verify",
+        { slug: slug || "", password },
+        { skipAuthRedirect: true }
+      );
       setToken(resp.token);
       setVerified(true);
-      localStorage.setItem("parent_token", resp.token);
+      if (slug) localStorage.setItem(storageKey(slug), resp.token);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Chyba");
     } finally {
@@ -65,24 +73,49 @@ export default function ParentView() {
     }
   };
 
+  const handleLogout = () => {
+    if (slug) localStorage.removeItem(storageKey(slug));
+    setToken("");
+    setVerified(false);
+    setEvaluations([]);
+    setPassword("");
+  };
+
   useEffect(() => {
     if (verified && token) {
       apiGet<{ evaluations: ParentEvaluation[] }>(
-        `/api/parent/evaluations?token=${token}`
+        `/api/parent/evaluations?token=${token}`,
+        { skipAuthRedirect: true }
       )
         .then((data) => setEvaluations(data.evaluations || []))
-        .catch(console.error);
+        .catch(() => {
+          // Session token is invalid/expired (e.g. server restarted) —
+          // drop back to the password form instead of silently showing
+          // an empty "no evaluations yet" page.
+          if (slug) localStorage.removeItem(storageKey(slug));
+          setToken("");
+          setVerified(false);
+          setError("Platnost přihlášení vypršela. Zadejte heslo znovu.");
+        });
     }
   }, [verified, token]);
 
-  // Auto-restore session
+  // Restore (or reset) the session whenever the child's slug changes —
+  // e.g. a parent switching between two children's links in the same tab.
   useEffect(() => {
-    const saved = localStorage.getItem("parent_token");
+    setError("");
+    setPassword("");
+    setEvaluations([]);
+    setView("current");
+    const saved = slug ? localStorage.getItem(storageKey(slug)) : null;
     if (saved) {
       setToken(saved);
       setVerified(true);
+    } else {
+      setToken("");
+      setVerified(false);
     }
-  }, []);
+  }, [slug]);
 
   if (!verified) {
     return (
@@ -116,9 +149,17 @@ export default function ParentView() {
 
   return (
     <div className="min-h-full bg-background text-foreground">
-      <header className="border-b border-border px-6 py-3">
-        <h1 className="text-lg font-bold">Hodnocení žáka</h1>
-        <p className="text-xs text-muted-foreground">Anonymní přístup</p>
+      <header className="border-b border-border px-6 py-3 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-lg font-bold">Hodnocení žáka</h1>
+          <p className="text-xs text-muted-foreground">Anonymní přístup</p>
+        </div>
+        <button
+          onClick={handleLogout}
+          className="text-xs text-muted-foreground hover:text-foreground shrink-0 mt-1"
+        >
+          Odhlásit
+        </button>
       </header>
 
       <div className="max-w-3xl mx-auto p-6">
